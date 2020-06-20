@@ -34,13 +34,12 @@ float RoutePlanner::CalculateHValue(RouteModel::Node const *node) {
 
 void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
     current_node->FindNeighbors();
-    // auto neighbor_count = current_node->neighbors.size();
     for (auto neighbor_node : current_node->neighbors){
         neighbor_node->parent = current_node;
-        neighbor_node->g_value = current_node->distance(*neighbor_node);
+        neighbor_node->g_value = current_node->g_value + current_node->distance(*neighbor_node);
         neighbor_node->h_value = this->CalculateHValue(neighbor_node);
         neighbor_node->visited = true;
-        this->open_list.emplace_back(current_node);
+        this->open_list.emplace_back(neighbor_node);
     }
 }
 
@@ -78,11 +77,11 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
 
     // TODO: Implement your solution here.
     auto _current_node =current_node;
+    distance += _current_node->g_value;
 
     while(_current_node != this->start_node){
         path_found.emplace_back(*_current_node);
         auto parent = _current_node->parent;
-        distance += _current_node->distance(*parent);
         _current_node = parent;
     }
     path_found.emplace_back(*_current_node);
@@ -103,5 +102,14 @@ void RoutePlanner::AStarSearch() {
     RouteModel::Node *current_node = nullptr;
 
     // TODO: Implement your solution here.
-
+    this->open_list.emplace_back(this->start_node);
+    this->start_node->visited = true;
+    while(this->open_list.size() > 0){
+        current_node = this->NextNode(); 
+        if(current_node == this->end_node){
+            this->m_Model.path = this->ConstructFinalPath(current_node);
+            return;
+        }
+        this->AddNeighbors(current_node);
+    }
 }
